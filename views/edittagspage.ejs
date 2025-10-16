@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Add Tags</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Bootstrap CSS CDN -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <%- include('partials/navbar') %>
+
+    <div class="container" style="margin-top: 40px">
+      
+      <% if (successMsg && successMsg.length >
+    0) { %>
+    <div class="alert alert-success alert-dismissible" role="alert">
+      <button
+        type="button"
+        class="close"
+        data-dismiss="alert"
+        aria-label="Close"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <%= successMsg %>
+    </div>
+    <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <button
+        type="button"
+        class="close"
+        data-dismiss="alert"
+        aria-label="Close"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <%= errorMsg %>
+    </div>
+    <% } %>
+      <h2>Add Tags</h2>
+
+      <form method="POST" action="/tags/edit/<%= tags._id %>">
+        <div class="form-group">
+          <label for="tagName">Tag Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="tagName"
+            name="name"
+            value="<%= tags.name %>"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">edit Tag</button>
+      </form>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="/public/js/script.js"></script>
+  </body>
+</html>

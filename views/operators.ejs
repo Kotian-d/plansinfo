@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Add Operator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Bootstrap CSS CDN -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <%- include('partials/navbar') %>
+
+    <div class="container" style="margin-top: 40px">
+      
+     <% if (successMsg && successMsg.length >
+    0) { %>
+    <div class="alert alert-success alert-dismissible" role="alert">
+      <button
+        type="button"
+        class="close"
+        data-dismiss="alert"
+        aria-label="Close"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <%= successMsg %>
+    </div>
+    <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <button
+        type="button"
+        class="close"
+        data-dismiss="alert"
+        aria-label="Close"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <%= errorMsg %>
+    </div>
+    <% } %>
+
+      <h2>Add Operator</h2>
+
+      <form method="POST" action="/operator/add">
+        <div class="form-group">
+          <label for="operatorName">Operator Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="operatorName"
+            name="name"
+            value="<%= operator.code %>"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="operatorCode">Operator Code</label>
+          <input
+            type="text"
+            class="form-control"
+            id="operatorCode"
+            value="<%= operator.code %>"
+            name="code"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Operator</button>
+      </form>
+
+      <% if (operators && operators.length) { %>
+      <hr />
+      <h3>Existing Operators</h3>
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>ProviderType</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% operators.forEach(op => { %>
+          <tr>
+            <td><%= op.name %></td>
+            <td><%= op.code %></td>
+            <td><%= op.providertype %></td>
+
+            <td>
+              <a
+                href="/operator/edit/<%= op._id %>"
+                class="btn btn-sm btn-warning"
+                >Edit</a
+              >
+              <form
+                action="/operator/delete/<%= op._id %>"
+                method="POST"
+                style="display: inline"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-sm btn-danger"
+                  onclick="return confirm('Delete this entry?');"
+                >
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+ <%- include('partials/footer') %>

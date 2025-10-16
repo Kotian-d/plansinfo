@@ -1,0 +1,46 @@
+# Ignore node_modules folder
+node_modules/
+
+# Ignore logs
+*.log
+logs/
+npm-debug.log*
+
+# Ignore environment files
+.env
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore IDE/editor folders and files
+.vscode/
+.idea/
+
+# Ignore Python cache and temp files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore compiled files
+*.o
+*.obj
+*.dll
+*.exe
+
+# Ignore build folders
+/dist/
+/build/
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+
+# Ignore coverage reports
+coverage/
+*.lcov
+
+# Ignore database files
+*.sqlite
+*.db
+
