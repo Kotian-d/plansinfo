@@ -3,7 +3,7 @@ import User from "../models/users.js";
 import Operator from "../models/operatormodel.js";
 import DthPlans from "../models/dthplans.js";
 import PlanModel from "../models/prepaidplan.js";
-import Tag from "../models/tagsmodel.js";
+import { clients } from "../utils/WASocket.js";
 
 const router = express.Router();
 
@@ -28,32 +28,60 @@ router.get("/prepaidplans", isValidKey, async (req, res) => {
   }
 
   const results = await PlanModel.aggregate([
-   { $unwind: "$tags" },
-  {
-    $group: {
-      _id: "$tags.name",
-      plans: {
-        $push: {
-          id: "$_id",
-          title: "$title",
-          description: "$description",
-          amount: "$amount",
-          validity: "$validity",
-          operator: "$operator.name"
-        }
-      }
-    }
-  }
-  ]);
+    // 1. Lookup operator details
+    {
+      $lookup: {
+        from: "operators",
+        localField: "operator",
+        foreignField: "_id",
+        as: "operator",
+      },
+    },
+    { $unwind: "$operator" },
 
-  const prepaidPlans = results.reduce((acc, curr) => {
-    acc[curr._id] = curr.plans;
-    return acc;
-  }, {});
+    // 2. Filter by operator before expanding tags
+    { $match: { "operator._id": operatorDoc._id } },
+
+    // 3. Lookup associated tags
+    {
+      $lookup: {
+        from: "tags",
+        localField: "tags",
+        foreignField: "_id",
+        as: "tags",
+      },
+    },
+    { $unwind: "$tags" },
+
+    // 4. Group by tag name, collect plan objects
+    {
+      $group: {
+        _id: "$tags.name",
+        plans: {
+          $push: {
+            title: "$title",
+            description: "$description",
+            amount: "$amount",
+            validity: "$validity",
+            updatedAt: "$updatedAt",
+          },
+        },
+      },
+    },
+
+    // 5. Format projection
+    {
+      $project: {
+        _id: 0,
+        tag: "$_id",
+        plans: 1,
+      },
+    },
+  ]);
 
   res.json({
     status: "success",
-    result: prepaidPlans,
+    result: results,
   });
 });
 
@@ -67,13 +95,50 @@ router.get("/dthplans", isValidKey, async (req, res) => {
     });
   }
 
-  const dthPlans = await DthPlans.find({ operator: operatorDoc._id }, {_id:0})
-    .select('title description amount1month amount3month amount6month amount12month updatedAt -operator -__v -createdAt')
+  const dthPlans = await DthPlans.find(
+    { operator: operatorDoc._id },
+    {
+      _id: 0,
+      "1month": "$amount1month",
+      "3month": "$amount3month",
+      "6month": "$amount6month",
+      "12month": "$amount12month",
+    }
+  )
+    .select("title description updatedAt -operator -__v -createdAt")
     .exec();
   res.json({
     status: "success",
     result: dthPlans,
   });
+});
+
+router.get("/send-message", async (req, res) => {
+  try {
+    const { phone, message, session, apikey } = req.query;
+    const isValid = await User.findOne({ apikey });
+    if (!isValid)
+      return res
+        .json({ status: "error", message: "Unauthorized User" })
+        .status(401);
+
+    const sock = clients.get(parseInt(session));
+    if (!sock) return res.status(400).json({ error: "WhatsApp not connected" });
+
+    const sanitized_number = phone.toString().replace(/[- )(]/g, ""); // remove unnecessary chars from the number
+    const final_number = `91${sanitized_number.substring(
+      sanitized_number.length - 10
+    )}`; // add 91 before the number here 91 is country code of India
+
+    const jid = phone.includes("@s.whatsapp.net")
+      ? phone
+      : `${phone}@s.whatsapp.net`;
+
+    await sock.sendMessage(jid, { text: message });
+    res.json({ status: "Message sent", session: session, to: phone });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export { router as apiroute };

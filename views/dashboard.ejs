@@ -30,63 +30,133 @@
     </style>
   </head>
   <body>
-    <%- include('partials/navbar') %> 
+    <%- include('partials/navbar') %>
 
     <div class="container">
-      <% if (successMsg && successMsg.length >
-    0) { %>
-    <div class="alert alert-success alert-dismissible" role="alert">
-      <button
-        type="button"
-        class="close"
-        data-dismiss="alert"
-        aria-label="Close"
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <%= successMsg %>
-    </div>
-    <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
-    <div class="alert alert-danger alert-dismissible" role="alert">
-      <button
-        type="button"
-        class="close"
-        data-dismiss="alert"
-        aria-label="Close"
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <%= errorMsg %>
-    </div>
-    <% } %>
+      <% if (successMsg && successMsg.length > 0) { %>
+      <div class="alert alert-success alert-dismissible" role="alert">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= successMsg %>
+      </div>
+      <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
+      <div class="alert alert-danger alert-dismissible" role="alert">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= errorMsg %>
+      </div>
+      <% } %>
 
       <h2 class="text-center" style="margin: 30px 0">Dashboard Summary</h2>
-      <div class="row">
-        <div class="col-md-3">
-          <div class="stat-box">
-            <div class="stat-number"><%= totalDthPlans %></div>
-            <div class="stat-label">Total DTH Plans</div>
+
+      <!-- Lapu Section -->
+      <section
+        style="border: 1px solid #ddd; padding: 20px;  margin-bottom: 40px; border-radius: 8px"
+      >
+        <h3
+          style="
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            color: #f39c12;
+          "
+        >
+          Lapu
+        </h3>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalLapuCount %></div>
+              <div class="stat-label">Total Lapu</div>
+            </div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="stat-box">
-            <div class="stat-number"><%= totalPrepaidPlans %></div>
-            <div class="stat-label">Total Prepaid Plans</div>
+      </section>
+
+      <!-- Plans Section -->
+      <section
+        style="
+          border: 1px solid #ddd;
+          padding: 20px;
+          margin-bottom: 40px;
+          border-radius: 8px;
+        "
+      >
+        <h3
+          style="
+            border-bottom: 2px solid #337ab7;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            color: #337ab7;
+          "
+        >
+          Plans
+        </h3>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalDthPlans %></div>
+              <div class="stat-label">Total DTH Plans</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalPrepaidPlans %></div>
+              <div class="stat-label">Total Prepaid Plans</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalOperators %></div>
+              <div class="stat-label">Total Operators</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalTags %></div>
+              <div class="stat-label">Total Tags</div>
+            </div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="stat-box">
-            <div class="stat-number"><%= totalOperators %></div>
-            <div class="stat-label">Total Operators</div>
+      </section>
+
+      <!-- WhatsApp Section -->
+      <section
+        style="border: 1px solid #ddd; padding: 20px; border-radius: 8px"
+      >
+        <h3
+          style="
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            color: #28a745;
+          "
+        >
+          WhatsApp
+        </h3>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="stat-box">
+              <div class="stat-number"><%= totalActiveSessions %></div>
+              <div class="stat-label">Total WA Sessions</div>
+            </div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="stat-box">
-            <div class="stat-number"><%= totalTags %></div>
-            <div class="stat-label">Total Tags</div>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
 
     <%- include('partials/footer') %>
+  </body>
+</html>

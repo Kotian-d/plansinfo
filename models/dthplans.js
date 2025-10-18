@@ -21,22 +21,18 @@ const DthPlansSchema = new Schema(
     },
     amount1month: {
       type: Number,
-      required: true,
       min: 0,
     },
     amount3month: {
       type: Number,
-      required: true,
       min: 0,
     },
     amount6month: {
       type: Number,
-      required: true,
       min: 0,
     },
     amount12month: {
       type: Number,
-      required: true,
       min: 0,
     },
   },
