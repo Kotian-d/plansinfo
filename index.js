@@ -128,48 +128,43 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("session-action", async ({ id, action }) => {
-    const clientId = `client-${id}`;
-    const s = sessions.find((sess) => sess.id === clientId);
-    if (s) {
-      if (action === "relogin") {
-        if (clients.has(s.clientId)) {
-          await clients.get(s.clientId)?.logout();
-          await clients.get(s.clientId)?.end();
-          clients.delete(s.clientId);
+    if (action === "relogin") {
+      if (clients.has(id)) {
+        await clients.get(id)?.logout();
+        await clients.get(id)?.end();
+        clients.delete(id);
 
-          await startClient(id, socket, sessionId);
-          // Refresh the sessions list from DB and send updated
-          sessions = await WhatsappSession.find({});
-          socket.emit("sessions", sessions);
-        }
+        await startClient(id, socket, sessionId);
+      } else {
+        await startClient(id, socket, sessionId);
       }
-      if (action === "stop") s.status = "disconnected";
-      if (action === "start") {
-        s.status = "reconnecting";
-        await startClient(s.clientId, socket, sessionId);
-      }
-      if (action === "delete") {
-        await clients.get(s.clientId)?.logout();
-        await clients.get(s.clientId)?.end();
+    }
+    if (action === "stop") s.status = "disconnected";
+    if (action === "start") {
+      s.status = "connected";
+    }
+    if (action === "delete") {
+      if (clients.has(id)) {
+        await clients.get(id)?.logout();
+        await clients.get(id)?.end();
         await WhatsappSession.deleteOne({ id: id });
-        clients.delete(s.clientId);
-
-        // Delete auth folder for the client
-        const authPath = path.join("./auth", s.clientId);
-        try {
-          await fs.rm(authPath, { recursive: true, force: true });
-          console.log(`Deleted auth session folder at ${authPath}`);
-        } catch (error) {
-          console.error(`Failed to delete auth folder ${authPath}:`, error);
-        }
-
-        // Refresh the sessions list from DB and send updated
-        sessions = await WhatsappSession.find({});
-        socket.emit("sessions", sessions);
+        clients.delete(id);
       }
-      if (action === "status") socket.emit("sessions", sessions);
+
+      // Delete auth folder for the client
+      const authPath = path.join("./auth", id);
+      try {
+        await fs.rm(authPath, { recursive: true, force: true });
+        console.log(`Deleted auth session folder at ${authPath}`);
+      } catch (error) {
+        console.error(`Failed to delete auth folder ${authPath}:`, error);
+      }
+
+      // Refresh the sessions list from DB and send updated
+      sessions = await WhatsappSession.find({});
       socket.emit("sessions", sessions);
     }
+    if (action === "status") socket.emit("sessions", sessions);
   });
 });
 
