@@ -99,8 +99,8 @@ export async function reconnectClient(clientId) {
     const { connection, lastDisconnect } = update
 
     if (connection === 'close') {
-      const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
-      const shouldReconnect = reason !== DisconnectReason.loggedOut
+      const reason = lastDisconnect?.error?.output?.statusCode || 0;
+      const shouldReconnect = reason !== DisconnectReason.loggedOut;
 
       console.log('Connection closed due to:', reason, ', reconnecting:', shouldReconnect)
 
