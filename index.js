@@ -137,7 +137,7 @@ io.on("connection", async (socket) => {
           await clients.get(s.clientId)?.end();
           clients.delete(s.clientId);
 
-          await reconnectClient(id);
+          await startClient(id, socket, sessionId);
           // Refresh the sessions list from DB and send updated
           sessions = await WhatsappSession.find({});
           socket.emit("sessions", sessions);

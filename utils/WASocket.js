@@ -18,7 +18,9 @@ function sendQrToClient(clientId, qr, socket) {
 }
 
 export async function startClient(clientId, socket, sessionId) {
-  const { state, saveCreds } = await useMultiFileAuthState(`./auth/${clientId}`);
+  const { state, saveCreds } = await useMultiFileAuthState(
+    `./auth/${clientId}`
+  );
   const { version } = await fetchLatestBaileysVersion();
 
   const sock = makeWASocket({
@@ -76,54 +78,76 @@ export async function startClient(clientId, socket, sessionId) {
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("messaging-history.set", ({ chats, contacts, messages, syncType }) => {
-    // handle messages if needed
-  });
+  sock.ev.on(
+    "messaging-history.set",
+    ({ chats, contacts, messages, syncType }) => {
+      // handle messages if needed
+    }
+  );
 }
 
 export async function reconnectClient(clientId) {
-
-  const { state, saveCreds } = await useMultiFileAuthState(`./auth/${clientId}`);
+  const { state, saveCreds } = await useMultiFileAuthState(
+    `./auth/${clientId}`
+  );
 
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
-    syncFullHistory: false
-  })
+    syncFullHistory: false,
+  });
 
-  sock.ev.on('creds.update', saveCreds)
+  sock.ev.on("creds.update", saveCreds);
 
   // Connection update handler
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
 
-    if (connection === 'close') {
+    if (qr) {
+      sock.end();
+      throw new Error("Re-Login required");
+    }
+
+    if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode || 0;
       const shouldReconnect = reason !== DisconnectReason.loggedOut;
 
-      console.log('Connection closed due to:', reason, ', reconnecting:', shouldReconnect)
+      console.log(
+        "Connection closed due to:",
+        reason,
+        ", reconnecting:",
+        shouldReconnect
+      );
 
       if (shouldReconnect) {
         await reconnectClient(clientId); // Recursive reconnect
       } else {
-        await WhatsappSession.findOneAndUpdate({ id: clientId }, { status: 'disconnected' });
+        await WhatsappSession.findOneAndUpdate(
+          { id: clientId },
+          { status: "disconnected" }
+        );
         clients.delete(clientId);
-        console.log('Session logged out; please delete auth_info_baileys and re-login.');
+        console.log(
+          "Session logged out; please delete auth_info_baileys and re-login."
+        );
+        sock.end();
         throw new Error("Re-Login required");
-        
       }
     }
 
-    if (connection === 'open') {
-      console.log('WhatsApp connection opened successfully!');
+    if (connection === "open") {
+      console.log("WhatsApp connection opened successfully!");
       clients.set(clientId, sock);
-      await WhatsappSession.findOneAndUpdate({ id: clientId }, { status: 'connected' });
+      await WhatsappSession.findOneAndUpdate(
+        { id: clientId },
+        { status: "connected" }
+      );
     }
-  })
+  });
 
-  sock.ev.on('messages.upsert', (m) => {
-    console.log('New message from:', m.messages[0]?.key?.remoteJid)
-  })
+  sock.ev.on("messages.upsert", (m) => {
+    console.log("New message from:", m.messages[0]?.key?.remoteJid);
+  });
 
   return sock;
 }
