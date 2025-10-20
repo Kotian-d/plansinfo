@@ -6,7 +6,6 @@ import {
 } from "@whiskeysockets/baileys";
 import WhatsappSession from "../models/WhatsappSession.js";
 import { getIO } from "../index.js";
-import Boom from "@hapi/boom";
 
 export const clients = new Map();
 
