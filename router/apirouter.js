@@ -3,7 +3,7 @@ import User from "../models/users.js";
 import Operator from "../models/operatormodel.js";
 import DthPlans from "../models/dthplans.js";
 import PlanModel from "../models/prepaidplan.js";
-import { clients } from "../utils/WASocket.js";
+import { clients, reconnectClient } from "../utils/WASocket.js";
 
 const router = express.Router();
 
@@ -123,19 +123,33 @@ router.get("/send-message", async (req, res) => {
         .status(401);
 
     const sock = clients.get(parseInt(session));
-    if (!sock) return res.status(400).json({ error: "WhatsApp not connected" });
+    if (!sock) {
+      try {
+        await reconnectClient(parseInt(session));
+      } catch (err) {
+        return res
+          .status(400)
+          .json({ error: "WhatsApp not connected : " + err.message });
+      }
+    }
 
     const sanitized_number = phone.toString().replace(/[- )(]/g, ""); // remove unnecessary chars from the number
     const final_number = `91${sanitized_number.substring(
       sanitized_number.length - 10
     )}`; // add 91 before the number here 91 is country code of India
 
-    const jid = phone.includes("@s.whatsapp.net")
-      ? phone
-      : `${phone}@s.whatsapp.net`;
+    const jid = final_number.includes("@s.whatsapp.net")
+      ? final_number
+      : `${final_number}@s.whatsapp.net`;
+
+    // Check if number exists on WhatsApp
+    const [exists] = await sock.onWhatsApp(final_number);
+    if (!exists || !exists.exists) {
+      return res.status(400).json({ error: "Number is not on WhatsApp" });
+    }
 
     await sock.sendMessage(jid, { text: message });
-    res.json({ status: "Message sent", session: session, to: phone });
+    res.json({ status: "Message sent", session: session, to: final_number });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

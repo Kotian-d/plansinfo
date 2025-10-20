@@ -41,6 +41,9 @@ socket.on("sessions", (sessions) => {
             }">${s.status}</span></td>
             <td>${s.lastUpdated || "-"}</td>
             <td>
+             <button class="btn btn-sm btn-primary" ${s.status === "disconnected" ? "" : "disabled"} onclick="reLoginSession('${
+                s.id
+              }')">Relogin</button>
               <button class="btn btn-sm btn-success" onclick="startSession('${
                 s.id
               }')">Start</button>
@@ -60,6 +63,9 @@ socket.on("sessions", (sessions) => {
 });
 
 // Functions to emit actions
+function reLoginSession(id) {
+  socket.emit("session-action", { id, action: "relogin" });
+}
 function startSession(id) {
   socket.emit("session-action", { id, action: "start" });
 }

@@ -18,7 +18,7 @@ import { apiroute } from "./router/apirouter.js";
 import flash from "connect-flash";
 import http from "http";
 import { Server } from "socket.io";
-import { clients, startClient } from "./utils/WASocket.js";
+import { clients, reconnectClient, startClient } from "./utils/WASocket.js";
 import WhatsappSession from "./models/WhatsappSession.js";
 import path from "path";
 
@@ -33,8 +33,8 @@ const server = http.createServer(app);
 function initSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: "*"
-    }
+      origin: "*",
+    },
   });
   return io;
 }
@@ -46,7 +46,7 @@ export function getIO() {
   return io;
 }
 
- io = initSocket(server);
+io = initSocket(server);
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -119,7 +119,6 @@ io.on("connection", async (socket) => {
 
   console.log("Client connected");
 
-
   // Send initial table state
   let sessions = await WhatsappSession.find({});
   socket.emit("sessions", sessions);
@@ -132,6 +131,18 @@ io.on("connection", async (socket) => {
     const clientId = `client-${id}`;
     const s = sessions.find((sess) => sess.id === clientId);
     if (s) {
+      if (action === "relogin") {
+        if (clients.has(s.clientId)) {
+          await clients.get(s.clientId)?.logout();
+          await clients.get(s.clientId)?.end();
+          clients.delete(s.clientId);
+
+          await reconnectClient(id);
+          // Refresh the sessions list from DB and send updated
+          sessions = await WhatsappSession.find({});
+          socket.emit("sessions", sessions);
+        }
+      }
       if (action === "stop") s.status = "disconnected";
       if (action === "start") {
         s.status = "reconnecting";
