@@ -101,7 +101,7 @@ export async function reconnectClient(clientId) {
 
   // Connection update handler
   sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
+    const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
       sock.end();
@@ -119,9 +119,7 @@ export async function reconnectClient(clientId) {
         shouldReconnect
       );
 
-      if (shouldReconnect) {
-        await reconnectClient(clientId); // Recursive reconnect
-      } else {
+      if (!shouldReconnect) { 
         await WhatsappSession.findOneAndUpdate(
           { id: clientId },
           { status: "disconnected" }

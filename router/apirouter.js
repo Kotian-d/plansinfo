@@ -149,7 +149,6 @@ router.get("/send-message", async (req, res) => {
     }
 
     // Load recent chat history for this jid
-    const chat = await sock.chatRead(jid);
     await sock.loadMessages(jid, 10); // Load last 10 messages
 
     await sock.sendMessage(jid, { text: message });
