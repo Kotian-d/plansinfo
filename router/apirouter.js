@@ -148,6 +148,10 @@ router.get("/send-message", async (req, res) => {
       return res.status(400).json({ error: "Number is not on WhatsApp" });
     }
 
+    // Load recent chat history for this jid
+    const chat = await sock.chatRead(jid);
+    await sock.loadMessages(jid, 10); // Load last 10 messages
+
     await sock.sendMessage(jid, { text: message });
     res.json({ status: "Message sent", session: session, to: final_number });
   } catch (err) {
