@@ -122,6 +122,20 @@ router.get("/send-message", async (req, res) => {
         .json({ status: "error", message: "Unauthorized User" })
         .status(401);
 
+    if(!phone || !message || !session) {
+      return  res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const sessionExists = await WhatsappSession.findOne({ id: session });
+
+    if (!sessionExists) {
+      return res.status(400).json({ error: "Invalid session" });
+    }
+
+    if(sessionExists.status !== "connected") {
+      return res.status(400).json({ error: "WhatsApp session not connected, please start the session" });
+    }
+
     const sock = clients.get(parseInt(session));
     if (!sock) {
       try {
