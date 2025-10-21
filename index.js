@@ -18,9 +18,9 @@ import { apiroute } from "./router/apirouter.js";
 import flash from "connect-flash";
 import http from "http";
 import { Server } from "socket.io";
-import { clients, reconnectClient, startClient } from "./utils/WASocket.js";
+import { clients, startClient } from "./utils/WASocket.js";
 import WhatsappSession from "./models/WhatsappSession.js";
-import path from "path";
+import { AuthStateModel } from "./config/mongoAuthState.js";
 
 const app = express();
 let io;
@@ -150,21 +150,15 @@ io.on("connection", async (socket) => {
         await WhatsappSession.deleteOne({ id: id });
         clients.delete(id);
       }
-
-      // Delete auth folder for the client
-      const authPath = path.join("./auth", id);
-      try {
-        await fs.rm(authPath, { recursive: true, force: true });
-        console.log(`Deleted auth session folder at ${authPath}`);
-      } catch (error) {
-        console.error(`Failed to delete auth folder ${authPath}:`, error);
-      }
-
+      await AuthStateModel.deleteOne({ sessionKey: id.toString() });
       // Refresh the sessions list from DB and send updated
       sessions = await WhatsappSession.find({});
       socket.emit("sessions", sessions);
     }
-    if (action === "status") socket.emit("sessions", sessions);
+    if (action === "status") {
+      sessions = await WhatsappSession.findOne({ id: id });
+      socket.emit("sessions", sessions);
+    }
   });
 });
 

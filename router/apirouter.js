@@ -125,14 +125,15 @@ router.get("/send-message", async (req, res) => {
     const sock = clients.get(parseInt(session));
     if (!sock) {
       try {
-        await reconnectClient(parseInt(session));
+        await reconnectClient(parseInt(session)); // Will throw if reconnect failed
+        sock = clients.get(parseInt(session));
+        if (!sock) throw new Error("Relogin required");
       } catch (err) {
         return res
           .status(400)
-          .json({ error: "WhatsApp not connected : " + err.message });
+          .json({ error: "WhatsApp not connected: " + err.message });
       }
     }
-
     const sanitized_number = phone.toString().replace(/[- )(]/g, ""); // remove unnecessary chars from the number
     const final_number = `91${sanitized_number.substring(
       sanitized_number.length - 10
@@ -143,7 +144,7 @@ router.get("/send-message", async (req, res) => {
       : `${final_number}@s.whatsapp.net`;
 
     // Check if number exists on WhatsApp
-    const [exists] = await sock.onWhatsApp(final_number);
+    const [exists] = await sock?.onWhatsApp(final_number);
     if (!exists || !exists.exists) {
       return res.status(400).json({ error: "Number is not on WhatsApp" });
     }

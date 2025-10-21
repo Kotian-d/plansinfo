@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.20",
+    "@whiskeysockets/baileys": "^6.6.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "connect-flash": "^0.1.1",

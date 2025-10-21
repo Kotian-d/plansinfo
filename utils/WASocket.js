@@ -1,13 +1,18 @@
 import {
-  default as makeWASocket,
+  makeWASocket,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   DisconnectReason,
 } from "@whiskeysockets/baileys";
 import WhatsappSession from "../models/WhatsappSession.js";
 import { getIO } from "../index.js";
+import { useMongooseAuthState } from "../config/mongoAuthState.js";
 
 export const clients = new Map();
+let heartbeatTimer;
+const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
+const MAX_MISSED_BEATS = 3;
+let missedBeats = 0;
 
 // Assume you have a function to send QR to client
 function sendQrToClient(clientId, qr, socket) {
@@ -18,8 +23,9 @@ function sendQrToClient(clientId, qr, socket) {
 }
 
 export async function startClient(clientId, socket, sessionId) {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    `./auth/${clientId}`
+  const { state, saveCreds } = await useMongooseAuthState(
+    process.env.MONGO_URI,
+    clientId
   );
   const { version } = await fetchLatestBaileysVersion();
 
@@ -48,6 +54,7 @@ export async function startClient(clientId, socket, sessionId) {
       });
 
       let sessions = await WhatsappSession.find({});
+      startHeartbeat(clientId);
 
       // Verify if sessionId is valid, else broadcast
       if (sessionId && io.sockets.adapter.rooms.has(sessionId)) {
@@ -60,6 +67,7 @@ export async function startClient(clientId, socket, sessionId) {
     }
 
     if (connection === "close") {
+      stopHeartbeat();
       let shouldReconnect = true;
       if (lastDisconnect?.error) {
         const err = lastDisconnect.error;
@@ -82,13 +90,16 @@ export async function startClient(clientId, socket, sessionId) {
     "messaging-history.set",
     ({ chats, contacts, messages, syncType }) => {
       // handle messages if needed
+      const msg = messages[0];
+      console.log("New message from:", msg.key.remoteJid);
     }
   );
 }
 
 export async function reconnectClient(clientId) {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    `./auth/${clientId}`
+  const { state, saveCreds } = await useMongooseAuthState(
+    process.env.MONGO_URI,
+    clientId
   );
 
   const sock = makeWASocket({
@@ -100,52 +111,92 @@ export async function reconnectClient(clientId) {
   sock.ev.on("creds.update", saveCreds);
 
   // Connection update handler
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update;
+  return new Promise((resolve, reject) => {
+    sock.ev.on("connection.update", (update) => {
+      const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
-      sock.end();
-      throw new Error("Re-Login required");
-    }
-
-    if (connection === "close") {
-      const reason = lastDisconnect?.error?.output?.statusCode || 0;
-      const shouldReconnect = reason !== DisconnectReason.loggedOut;
-
-      console.log(
-        "Connection closed due to:",
-        reason,
-        ", reconnecting:",
-        shouldReconnect
-      );
-
-      if (!shouldReconnect) { 
-        await WhatsappSession.findOneAndUpdate(
-          { id: clientId },
-          { status: "disconnected" }
-        );
-        clients.delete(clientId);
-        console.log(
-          "Session logged out; please delete auth_info_baileys and re-login."
-        );
+      if (qr) {
         sock.end();
-        throw new Error("Re-Login required");
+        reject(new Error("Re-Login required"));
+      }
+
+      if (connection === "close") {
+        const reason = lastDisconnect?.error?.output?.statusCode || 0;
+        const shouldReconnect = reason !== DisconnectReason.loggedOut;
+
+        console.log(
+          "Connection closed due to:",
+          reason,
+          ", reconnecting:",
+          shouldReconnect
+        );
+
+        if (!shouldReconnect) {
+          WhatsappSession.findOneAndUpdate(
+            { id: clientId },
+            { status: "disconnected" }
+          ).catch(console.error);
+          clients.delete(clientId);
+          console.log(
+            "Session logged out; please delete auth info and re-login."
+          );
+          sock.end();
+          reject(new Error("Re-Login required"));
+        }
+      }
+
+      if (connection === "open") {
+        console.log("WhatsApp connection opened successfully!");
+        clients.set(clientId, sock);
+        WhatsappSession.findOneAndUpdate(
+          { id: clientId },
+          { status: "connected" }
+        ).catch(console.error);
+        resolve(sock);
+      }
+    });
+
+    sock.ev.on("messages.upsert", (m) => {
+      console.log("New message from:", m.messages[0]?.key?.remoteJid);
+    });
+  });
+}
+
+/**
+ * Restarts socket cleanly, preserving the same state directory
+ */
+async function restartSocket(clientId) {
+  try {
+    const sock = clients.get(clientId);
+    await sock?.ws?.close();
+  } catch {}
+  missedBeats = 0;
+  clearInterval(heartbeatTimer);
+  await startSock();
+}
+
+/**
+ * Sends a WA ping every interval and checks for activity
+ */
+function startHeartbeat(clientId) {
+  clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(async () => {
+    try {
+      const sock = clients.get(clientId);
+      await sock?.presenceSubscribe(sock?.user?.id || "status@broadcast");
+      missedBeats = 0; // if success, reset
+      console.log("💓 Heartbeat OK");
+    } catch (err) {
+      missedBeats++;
+      console.warn("💔 Heartbeat missed", missedBeats, err?.message);
+      if (missedBeats >= MAX_MISSED_BEATS) {
+        console.error("🚨 Too many missed heartbeats, reconnecting...");
+        await restartSocket(clientId);
       }
     }
+  }, HEARTBEAT_INTERVAL);
+}
 
-    if (connection === "open") {
-      console.log("WhatsApp connection opened successfully!");
-      clients.set(clientId, sock);
-      await WhatsappSession.findOneAndUpdate(
-        { id: clientId },
-        { status: "connected" }
-      );
-    }
-  });
-
-  sock.ev.on("messages.upsert", (m) => {
-    console.log("New message from:", m.messages[0]?.key?.remoteJid);
-  });
-
-  return sock;
+function stopHeartbeat() {
+  clearInterval(heartbeatTimer);
 }
