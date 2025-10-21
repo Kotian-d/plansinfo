@@ -4,6 +4,7 @@ import Operator from "../models/operatormodel.js";
 import DthPlans from "../models/dthplans.js";
 import PlanModel from "../models/prepaidplan.js";
 import { clients, reconnectClient } from "../utils/WASocket.js";
+import WhatsappSession from "../models/WhatsappSession.js";
 
 const router = express.Router();
 
