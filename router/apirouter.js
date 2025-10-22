@@ -137,7 +137,7 @@ router.get("/send-message", async (req, res) => {
       return res.status(400).json({ error: "WhatsApp session not connected, please start the session" });
     }
 
-    const sock = clients.get(parseInt(session));
+    let sock = clients.get(parseInt(session));
     if (!sock) {
       try {
         await reconnectClient(parseInt(session)); // Will throw if reconnect failed
