@@ -211,6 +211,31 @@ app.get("/login", (req, res) => {
   res.render("login", { error: "" }); // Renders views/index.ejs and passes data
 });
 
+app.get("/apidocs", async (req, res) => {
+  const BASE_URL = "https://plans.pavathi.com/api/v1";
+
+  const opcodes = await Operator.find({}, { code: 1, name: 1, _id: 0 });
+
+  const endpoints = [
+    {
+      name: "DTH Plans",
+      method: "GET",
+      url: `${BASE_URL}/dthplans?apikey=@API_KEY&operator=@opcode`,
+      example: `${BASE_URL}/dthplans?apikey=@API_KEY&operator=AD`,
+      description: "Fetch available DTH recharge plans by operator code.",
+    },
+    {
+      name: "Prepaid Plans",
+      method: "GET",
+      url: `${BASE_URL}/prepaidplans?apikey=@API_KEY&operator=@opcode`,
+      example: `${BASE_URL}/prepaidplans?apikey=@API_KEY&operator=AT`,
+      description: "Retrieve prepaid recharge plans by operator code.",
+    },
+  ];
+
+  res.render("apidoc", { endpoints, opcodes }); // Renders views/apidoc.ejs and passes data
+});
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -278,7 +303,7 @@ app.get("/logout", (req, res) => {
   res.redirect("login"); // Renders views/index.ejs and passes data
 });
 
-app.get("/whatsapp", (req, res) => {
+app.get("/whatsapp", isloggedIn, (req, res) => {
   res.render("whatsapp");
 });
 

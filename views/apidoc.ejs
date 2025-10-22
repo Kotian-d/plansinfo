@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pavathi API Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f5f7fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .endpoint {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 6px;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+    }
+    code {
+      background: #f0f0f0;
+      padding: 3px 6px;
+      border-radius: 3px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>API Documentation</h1>
+
+  <% endpoints.forEach(ep => { %>
+    <div class="endpoint">
+      <h2><%= ep.name %></h2>
+      <p><strong>Method:</strong> <code><%= ep.method %></code></p>
+      <p><strong>Base URL:</strong> <code><%= ep.url %></code></p>
+      <p><strong>Description:</strong> <%= ep.description %></p>
+      <p><strong>Example:</strong> <code><%= ep.example %></code></p>
+    </div>
+  <% }) %>
+
+  <h2>Operator Codes</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Operator</th>
+        <th>Code</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% opcodes.forEach(op => { %>
+        <tr>
+          <td><%= op.name %></td>
+          <td><code><%= op.code %></code></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+</body>
+</html>
