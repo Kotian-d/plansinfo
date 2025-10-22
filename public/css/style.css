@@ -1,0 +1,17 @@
+html {
+  font-size: 16px; /* Increase from default 16px */
+  /* You can set this to 17px, 18px, 20px, etc. based on your preference */
+}
+
+body {
+  font-size: 1rem; /* Ensures body font uses the html size */
+}
+
+
+.navbar-brand {
+  font-size: 1.75rem; /* About 28px */
+  font-weight: bold; /* Optional: make it bold */
+  display: flex;
+  align-items: center;
+  height: 100%;
+}

@@ -21,12 +21,20 @@ import { Server } from "socket.io";
 import { clients, startClient } from "./utils/WASocket.js";
 import WhatsappSession from "./models/WhatsappSession.js";
 import { AuthStateModel } from "./config/mongoAuthState.js";
+import favicon from "serve-favicon";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 let io;
 
 app.use(express.static("public"));
 app.use(flash());
+// Serve the favicon
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 const server = http.createServer(app);
 
@@ -139,9 +147,21 @@ io.on("connection", async (socket) => {
         await startClient(id, socket, sessionId);
       }
     }
-    if (action === "stop") s.status = "disconnected";
+    if (action === "stop") {
+      await WhatsappSession.findByIdAndUpdate(
+        { id: id },
+        { status: "disconnected" }
+      );
+      let s = await WhatsappSession.findOne({ id: id });
+      socket.emit("sessions", s);
+    }
     if (action === "start") {
-      s.status = "connected";
+      await WhatsappSession.findByIdAndUpdate(
+        { id: id },
+        { status: "disconnected" }
+      );
+      let s = await WhatsappSession.findOne({ id: id });
+      socket.emit("sessions", s);
     }
     if (action === "delete") {
       if (clients.has(id)) {
@@ -152,6 +172,7 @@ io.on("connection", async (socket) => {
       }
       await AuthStateModel.deleteOne({ sessionKey: id.toString() });
       // Refresh the sessions list from DB and send updated
+      await WhatsappSession.deleteOne({ id: id });
       sessions = await WhatsappSession.find({});
       socket.emit("sessions", sessions);
     }

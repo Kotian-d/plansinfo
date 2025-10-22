@@ -3,6 +3,7 @@ import {
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   DisconnectReason,
+  Browsers,
 } from "@whiskeysockets/baileys";
 import WhatsappSession from "../models/WhatsappSession.js";
 import { getIO } from "../index.js";
@@ -30,6 +31,7 @@ export async function startClient(clientId, socket, sessionId) {
   const { version } = await fetchLatestBaileysVersion();
 
   const sock = makeWASocket({
+    browser: Browsers.windows('Chrome'),
     version,
     printQRInTerminal: false,
     auth: state,
@@ -103,6 +105,7 @@ export async function reconnectClient(clientId) {
   );
 
   const sock = makeWASocket({
+    browser: Browsers.windows('Chrome'),
     auth: state,
     printQRInTerminal: false,
     syncFullHistory: false,
@@ -132,6 +135,7 @@ export async function reconnectClient(clientId) {
         );
 
         if (!shouldReconnect) {
+          stopHeartbeat();
           WhatsappSession.findOneAndUpdate(
             { id: clientId },
             { status: "disconnected" }
@@ -146,6 +150,7 @@ export async function reconnectClient(clientId) {
       }
 
       if (connection === "open") {
+        startHeartbeat(clientId);
         console.log("WhatsApp connection opened successfully!");
         clients.set(clientId, sock);
         WhatsappSession.findOneAndUpdate(
