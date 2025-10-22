@@ -45,20 +45,25 @@ export async function useMongooseAuthState(mongoUri, sessionKey = 'defaultSessio
         return data
       },
       set: async (data) => {
-        for (const category in data) {
-          if (!keys[category]) keys[category] = {}
-          Object.assign(keys[category], data[category])
-        }
-        authStateDoc.keys = JSON.stringify(keys, BufferJSON.replacer)
-        await authStateDoc.save()
-      }
+    // merge and save atomically
+    for (const category in data) {
+      if (!keys[category]) keys[category] = {};
+      Object.assign(keys[category], data[category]);
+    }
+    await AuthStateModel.updateOne(
+      { sessionKey },
+      { $set: { keys: JSON.stringify(keys, BufferJSON.replacer) } }
+    );
+  }
     }
   }
 
   const saveCreds = async () => {
-    authStateDoc.creds = JSON.stringify(state.creds, BufferJSON.replacer)
-    await authStateDoc.save()
-  }
+  await AuthStateModel.updateOne(
+    { sessionKey },
+    { $set: { creds: JSON.stringify(state.creds, BufferJSON.replacer) } }
+  );
+};
 
   return { state, saveCreds }
 }
