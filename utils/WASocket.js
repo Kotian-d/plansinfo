@@ -93,7 +93,7 @@ export async function startClient(clientId, socket, sessionId) {
     ({ chats, contacts, messages, syncType }) => {
       // handle messages if needed
       const msg = messages[0];
-      console.log("New message from:", msg.key.remoteJid);
+      console.log("New message from:", msg);
     }
   );
 }
