@@ -13,33 +13,32 @@
   <body>
     <%- include('partials/navbar') %>
     <div class="container" style="margin-top: 40px">
-      <% if (successMsg && successMsg.length >
-    0) { %>
-    <div class="alert alert-success alert-dismissible" role="alert">
-      <button
-        type="button"
-        class="close"
-        data-dismiss="alert"
-        aria-label="Close"
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <%= successMsg %>
-    </div>
-    <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
-    <div class="alert alert-danger alert-dismissible" role="alert">
-      <button
-        type="button"
-        class="close"
-        data-dismiss="alert"
-        aria-label="Close"
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <%= errorMsg %>
-    </div>
-    <% } %>
-      
+      <% if (successMsg && successMsg.length > 0) { %>
+      <div class="alert alert-success alert-dismissible" role="alert">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= successMsg %>
+      </div>
+      <% } %> <% if (errorMsg && errorMsg.length > 0) { %>
+      <div class="alert alert-danger alert-dismissible" role="alert">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= errorMsg %>
+      </div>
+      <% } %>
+
       <h2 class="text-center">DTH Plans</h2>
 
       <!-- Import from CSV Section -->
@@ -178,6 +177,21 @@
         onkeyup="filterTable()"
       />
 
+      <div class="form-group">
+        <label for="operatorFilter">Filter by Operator:</label>
+        <select
+          id="operatorFilter"
+          class="form-control"
+          onchange="filterByOperator()"
+        >
+          <option value="">All Operators</option>
+          <% if (operators && operators.length) { %> <%
+          operators.forEach(function(op) { %>
+          <option value="<%= op.name %>"><%= op.name %></option>
+          <% }) %> <% } %>
+        </select>
+      </div>
+
       <!-- Entries Section -->
       <% if (entries && entries.length) { %>
       <hr />
@@ -235,4 +249,5 @@
       <% } %>
     </div>
   </body>
-<%- include('partials/footer') %>
+  <%- include('partials/footer') %>
+</html>

@@ -119,3 +119,18 @@ document
       alert("New password and confirmation do not match.");
     }
   });
+
+  function filterByOperator() {
+  const select = document.getElementById('operatorFilter');
+  const filter = select.value.toUpperCase();
+  const table = document.getElementById('resultsTable');
+  const tr = table.getElementsByTagName('tr');
+
+  for (let i = 1; i < tr.length; i++) {  // start at 1 to skip header row
+    const td = tr[i].getElementsByTagName('td')[2]; // Operator is 3rd column (index 2)
+    if (td) {
+      const txtValue = td.textContent || td.innerText;
+      tr[i].style.display = filter === "" || txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+  }
+}
