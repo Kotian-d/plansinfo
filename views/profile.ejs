@@ -6,23 +6,7 @@
       rel="stylesheet"
       href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
     />
-    <style>
-      .profile-container {
-        max-width: 600px;
-        margin: 40px auto;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        background: #fff;
-      }
-      .apikey {
-        word-break: break-all;
-        background-color: #f7f7f7;
-        padding: 10px;
-        border-radius: 4px;
-        font-family: monospace;
-        user-select: all;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/profile.css" />
   </head>
   <body>
     <%- include('partials/navbar') %>
@@ -74,7 +58,59 @@
 
         <dt>API Key:</dt>
         <dd><div class="apikey"><%= user.apikey %></div></dd>
+
+        <dt>Whitelisted IPs:</dt>
+        <dd>
+          <div class="ip-list" id="ipList">
+            <% if (user.whitelistedIPs && user.whitelistedIPs.length > 0) { %>
+              <% user.whitelistedIPs.forEach(function(ip) { %>
+                <span class="ip-tag">
+                  <%= ip %>
+                  <span class="remove-ip" onclick="removeIP('<%= ip %>')">&times;</span>
+                </span>
+              <% }); %>
+            <% } else { %>
+              <span class="text-muted">No IPs whitelisted</span>
+            <% } %>
+          </div>
+        </dd>
       </dl>
+
+      <hr />
+
+      <h3>Add IP to Whitelist</h3>
+      <form
+        action="/profile/add-ip"
+        method="POST"
+        class="form-horizontal"
+        id="addIPForm"
+      >
+        <div class="form-group">
+          <label class="control-label col-sm-4" for="ipAddress"
+            >IP Address:</label
+          >
+          <div class="col-sm-8">
+            <input
+              type="text"
+              class="form-control"
+              id="ipAddress"
+              name="ipAddress"
+              placeholder="e.g., 192.168.1.100 or 10.0.0.0/24"
+              required
+              pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:3[0-2]|[12]?[0-9]))?$"
+              title="Enter a valid IP address (e.g., 192.168.1.1) or CIDR notation (e.g., 192.168.1.0/24)"
+            />
+            <small class="help-block">Enter IPv4 address or CIDR notation</small>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <button type="submit" class="btn btn-success">
+              <span class="glyphicon glyphicon-plus"></span> Add IP
+            </button>
+          </div>
+        </div>
+      </form>
 
       <hr />
 
@@ -139,4 +175,38 @@
       </form>
     </div>
 
-<%- include('partials/footer') %>
+    <script>
+      // Function to remove IP from whitelist
+      function removeIP(ip) {
+        if (confirm('Are you sure you want to remove ' + ip + ' from whitelist?')) {
+          // Create a form and submit
+          var form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/profile/remove-ip';
+          
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'ipAddress';
+          input.value = ip;
+          
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        }
+      }
+
+      // Client-side password match validation
+      document.getElementById('passwordChangeForm').addEventListener('submit', function(e) {
+        var newPassword = document.getElementById('newPassword').value;
+        var confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword !== confirmPassword) {
+          e.preventDefault();
+          alert('New password and confirm password do not match!');
+        }
+      });
+    </script>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

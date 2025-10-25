@@ -1,5 +1,5 @@
 import express from "express";
-import { isloggedIn } from "../index.js";
+import { isloggedIn } from "../utils/authmiddleware.js";
 import Tag from "../models/tagsmodel.js";
 
 const router = express.Router();

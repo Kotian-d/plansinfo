@@ -7,11 +7,67 @@ body {
   font-size: 1rem; /* Ensures body font uses the html size */
 }
 
-
 .navbar-brand {
   font-size: 1.75rem; /* About 28px */
   font-weight: bold; /* Optional: make it bold */
   display: flex;
   align-items: center;
   height: 100%;
+}
+
+.profile-container {
+  max-width: 600px;
+  margin: 40px auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background: #fff;
+}
+.apikey {
+  word-break: break-all;
+  background-color: #f7f7f7;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  user-select: all;
+}
+.ip-list {
+  background-color: #f7f7f7;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  min-height: 40px;
+}
+.ip-tag {
+  display: inline-block;
+  background-color: #337ab7;
+  color: white;
+  padding: 4px 8px;
+  margin: 2px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.ip-tag .remove-ip {
+  margin-left: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.stat-box {
+  margin: 20px 10px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.stat-number {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #337ab7;
+}
+.stat-label {
+  font-size: 18px;
+  font-weight: 500;
+  color: #555;
 }

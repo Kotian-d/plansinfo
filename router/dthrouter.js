@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import DthPlans from "../models/dthplans.js";
-import { isloggedIn } from "../index.js";
+import { isloggedIn } from "../utils/authmiddleware.js";
 import Operator from "../models/operatormodel.js";
 import csv from "csv-parser";
 import stream from "stream";
@@ -85,7 +85,7 @@ router.post("/add", async (req, res) => {
   });
 });
 
-router.post("/uploadcsv", upload.single("csvfile"), async (req, res) => {
+router.post("/uploadcsv", isloggedIn, upload.single("csvfile"), async (req, res) => {
   try {
   
     const entries = await DthPlans.find({});
@@ -177,7 +177,7 @@ router.post("/uploadcsv", upload.single("csvfile"), async (req, res) => {
   }
 });
 
-router.get("/edit/:id", async (req, res) => {
+router.get("/edit/:id", isloggedIn, async (req, res) => {
   try {
     const editdata = await DthPlans.findById({ _id: req.params.id }).populate("operator");
 
@@ -209,7 +209,7 @@ router.get("/edit/:id", async (req, res) => {
   }
 });
 
-router.post("/edit/:id", async (req, res) => {
+router.post("/edit/:id", isloggedIn, async (req, res) => {
   try {
     const {
       title,
@@ -243,7 +243,7 @@ router.post("/edit/:id", async (req, res) => {
   }
 });
 
-router.post("/delete/:id", async (req, res) => {
+router.post("/delete/:id", isloggedIn, async (req, res) => {
   try {
     await DthPlans.findByIdAndDelete({ _id: req.params.id });
 
@@ -284,7 +284,7 @@ router.post("/delete/:id", async (req, res) => {
   }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/search", isloggedIn, async (req, res) => {
   try {
     const q = req.query.q || "";
     const regex = new RegExp(q, "i"); // case-insensitive regex

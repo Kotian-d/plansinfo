@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import PlanModel from "../models/prepaidplan.js";
-import { isloggedIn } from "../index.js";
+import { isloggedIn } from "../utils/authmiddleware.js";
 import Operator from "../models/operatormodel.js";
 import csv from "csv-parser";
 import stream from "stream";
@@ -39,7 +39,7 @@ router.get("/", isloggedIn, async (req, res) => {
   }); // Renders views/index.ejs and passes data
 });
 
-router.post("/add", async (req, res) => {
+router.post("/add", isloggedIn, async (req, res) => {
   const { title, description, operator, validity, amount, tags } = req.body;
 
   await PlanModel.create({
@@ -79,7 +79,7 @@ router.post("/add", async (req, res) => {
   });
 });
 
-router.post("/uploadcsv", upload.single("csvfile"), async (req, res) => {
+router.post("/uploadcsv", isloggedIn, upload.single("csvfile"), async (req, res) => {
   /*
   await DthPlans.create({
     title,
@@ -160,7 +160,7 @@ router.post("/uploadcsv", upload.single("csvfile"), async (req, res) => {
   });
 });
 
-router.get("/edit/:id", async (req, res) => {
+router.get("/edit/:id", isloggedIn, async (req, res) => {
   try {
     const editdata = await PlanModel.findById({ _id: req.params.id });
     const operators = await Operator.find({providertype: "PREPAID"});
@@ -188,7 +188,7 @@ router.get("/edit/:id", async (req, res) => {
   }
 });
 
-router.post("/edit/:id", async (req, res) => {
+router.post("/edit/:id", isloggedIn, async (req, res) => {
   try {
     const { title, description, operator, amount, validity, tags } = req.body;
 
@@ -244,7 +244,7 @@ router.post("/edit/:id", async (req, res) => {
   }
 });
 
-router.post("/delete/:id", async (req, res) => {
+router.post("/delete/:id", isloggedIn, async (req, res) => {
   try {
     await PlanModel.findByIdAndDelete({ _id: req.params.id });
 
@@ -271,7 +271,7 @@ router.post("/delete/:id", async (req, res) => {
   }
 });
 
-router.get('/search', async (req, res) => {
+router.get('/search', isloggedIn, async (req, res) => {
   try {
     const searchTerm = req.query.q || '';
     const regex = new RegExp(searchTerm, 'i'); // case-insensitive regex

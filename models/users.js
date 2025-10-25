@@ -24,6 +24,10 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     unique: true
+  },
+  whitelistedIPs: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

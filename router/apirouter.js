@@ -5,20 +5,11 @@ import DthPlans from "../models/dthplans.js";
 import PlanModel from "../models/prepaidplan.js";
 import { clients, reconnectClient } from "../utils/WASocket.js";
 import WhatsappSession from "../models/WhatsappSession.js";
+import { isValidApiKey, validateIP } from "../utils/authmiddleware.js";
 
 const router = express.Router();
 
-async function isValidKey(req, res, next) {
-  const apikey = req.query.apikey;
-  const isValid = await User.findOne({ apikey });
-  if (!isValid)
-    return res
-      .json({ status: "error", message: "Unauthorized User" })
-      .status(401);
-  next();
-}
-
-router.get("/prepaidplans", isValidKey, async (req, res) => {
+router.get("/prepaidplans", isValidApiKey, validateIP, async (req, res) => {
   const opcode = req.query.operator;
   const operatorDoc = await Operator.findOne({ code: opcode });
   if (!operatorDoc) {
@@ -86,7 +77,7 @@ router.get("/prepaidplans", isValidKey, async (req, res) => {
   });
 });
 
-router.get("/dthplans", isValidKey, async (req, res) => {
+router.get("/dthplans", isValidApiKey, validateIP, async (req, res) => {
   const opcode = req.query.operator;
   const operatorDoc = await Operator.findOne({ code: opcode });
   if (!operatorDoc) {
@@ -114,17 +105,12 @@ router.get("/dthplans", isValidKey, async (req, res) => {
   });
 });
 
-router.get("/send-message", async (req, res) => {
+router.get("/send-message", isValidApiKey, validateIP, async (req, res) => {
   try {
-    const { phone, message, session, apikey } = req.query;
-    const isValid = await User.findOne({ apikey });
-    if (!isValid)
-      return res
-        .json({ status: "error", message: "Unauthorized User" })
-        .status(401);
-
-    if(!phone || !message || !session) {
-      return  res.status(400).json({ error: "Missing required parameters" });
+    const { phone, message, session } = req.query;
+    
+    if (!phone || !message || !session) {
+      return res.status(400).json({ error: "Missing required parameters" });
     }
 
     const sessionExists = await WhatsappSession.findOne({ id: session });
@@ -133,8 +119,12 @@ router.get("/send-message", async (req, res) => {
       return res.status(400).json({ error: "Invalid session" });
     }
 
-    if(sessionExists.status !== "connected") {
-      return res.status(400).json({ error: "WhatsApp session not connected, please start the session" });
+    if (sessionExists.status !== "connected") {
+      return res
+        .status(400)
+        .json({
+          error: "WhatsApp session not connected, please start the session",
+        });
     }
 
     let sock = clients.get(parseInt(session));

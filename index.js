@@ -24,6 +24,8 @@ import { AuthStateModel } from "./config/mongoAuthState.js";
 import favicon from "serve-favicon";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { isloggedIn, isNotLoggedIn } from "./utils/authmiddleware.js";
+import { userrouter } from "./router/userrouter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,36 +85,16 @@ app.use((req, res, next) => {
   res.locals.errorMsg = req.flash("error");
   next();
 });
+
+app.use("/", userrouter);
 app.use("/dthplans", dthplansroute);
 app.use("/prepaidplans", prepaidplansroute);
 app.use("/operator", operatorroute);
 app.use("/tags", tagsrouter);
 app.use("/api/v1", apiroute);
 
-export function isloggedIn(req, res, next) {
-  if (req.session && req.session.user) {
-    // Session exists, proceed to next middleware/route
-    next();
-  } else {
-    // No valid session, redirect to login page or send error
-    res.redirect("/login");
-    // Or: res.status(401).send('Unauthorized');
-  }
-}
-
-export function isNotLoggedIn(req, res, next) {
-  if (!req.session && !req.session.user) {
-    // Session exists, proceed to next middleware/route
-    next();
-  } else {
-    // No valid session, redirect to login page or send error
-    res.redirect("/dashboard");
-    // Or: res.status(401).send('Unauthorized');
-  }
-}
-
 function generateRandomHexString(length) {
-  const hexChars = "0123456789abcdef";
+  const hexChars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let result = "";
   for (let i = 0; i < length; i++) {
     result += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
@@ -188,26 +170,6 @@ app.get("/", isNotLoggedIn, (req, res) => {
   res.render("login", { error: "" }); // Renders views/index.ejs and passes data
 });
 
-app.get("/dashboard", isloggedIn, async (req, res) => {
-  // Dummy data
-  const dthPlans = await DthPlans.countDocuments();
-  const prepaidPlans = await PlanModel.countDocuments();
-  const operators = await Operator.countDocuments({});
-  const tags = await Tag.countDocuments({});
-  const activeSessions = await WhatsappSession.countDocuments({
-    status: "connected",
-  });
-
-  res.render("dashboard", {
-    totalDthPlans: dthPlans,
-    totalPrepaidPlans: prepaidPlans,
-    totalOperators: operators,
-    totalTags: tags,
-    totalActiveSessions: activeSessions,
-    totalLapuCount: dthPlans + prepaidPlans,
-  }); // Renders views/index.ejs and passes data
-});
-
 app.get("/register/:id", async (req, res) => {
   res.render("register");
 });
@@ -273,50 +235,6 @@ app.post("/login", async (req, res) => {
   }
 
   res.render("login", { error: "Invalid Login details" });
-});
-
-app.get("/profile", isloggedIn, async (req, res) => {
-  const user = await User.findOne({ _id: req.session.user });
-  res.render("profile", {
-    error: "",
-    message: "",
-    title: "Profile",
-    user: user,
-    avatar: "/images/avatar.png",
-  }); // Renders views/index.ejs and passes data
-});
-
-app.post("/profile/change-password", isloggedIn, async (req, res) => {
-  const { currentPassword, newPassword, confirmPassword } = req.body;
-  const user = await User.find(req.session.user);
-
-  const isvalid = await bcrypt.compare(currentPassword, user.password);
-
-  if (!isvalid)
-    return res.render("profile", {
-      error: "",
-      message: "Invalid Password",
-      title: "Profile",
-      user,
-      avatar: "/images/avatar.png",
-    });
-
-  const hashedpassword = await bcrypt.hash(newPassword, 10);
-
-  await User.findByIdAndUpdate(
-    { _id: user._id },
-    {
-      password: hashedpassword,
-    }
-  );
-
-  res.render("profile", {
-    error: "",
-    message: "",
-    title: "Profile",
-    user,
-    avatar: "/images/avatar.png",
-  }); // Renders views/index.ejs and passes data
 });
 
 app.get("/logout", (req, res) => {

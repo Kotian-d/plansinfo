@@ -1,18 +1,18 @@
 import express from "express";
-import { isloggedIn } from "../index.js";
+import { isloggedIn } from "../utils/authmiddleware.js";
 import Operator from "../models/operatormodel.js";
 
 const router = express.Router();
 
 // Add Operator GET
-router.get("/add", async (req, res) => {
+router.get("/add", isloggedIn, async (req, res) => {
   const operators = await Operator.find();
   const operator = {};
   res.render("operators", { error: "", operators, message: "", operator });
 });
 
 // Add Operator POST
-router.post("/add", async (req, res) => {
+router.post("/add", isloggedIn, async (req, res) => {
   const { name, code } = req.body;
   const operator = {};
 
@@ -49,7 +49,7 @@ router.post("/add", async (req, res) => {
 });
 
 // Add Operator EDIT
-router.get("/edit/:id", async (req, res) => {
+router.get("/edit/:id", isloggedIn, async (req, res) => {
   const operator = await Operator.findOne({ _id: req.params.id });
   res.render("editoperator", {
     providertype: ["Prepaid", "DTH"],
@@ -60,7 +60,7 @@ router.get("/edit/:id", async (req, res) => {
 });
 
 // Add Operator EDIT
-router.post("/edit/:id", async (req, res) => {
+router.post("/edit/:id", isloggedIn, async (req, res) => {
   let { name, code, providertype } = req.body;
   const operator = await Operator.findOne({ _id: req.params.id });
   providertype = providertype.toUpperCase()
